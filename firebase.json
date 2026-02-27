@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"planche-app","appId":"1:200880858082:android:6efff98a2d093ed46f0fbb","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"planche-app","configurations":{"android":"1:200880858082:android:6efff98a2d093ed46f0fbb","ios":"1:200880858082:ios:bea5631c7c5d82a46f0fbb"}}}}}}
