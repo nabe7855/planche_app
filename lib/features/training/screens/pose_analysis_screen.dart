@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -16,12 +17,19 @@ class PoseAnalysisScreen extends ConsumerStatefulWidget {
   ConsumerState<PoseAnalysisScreen> createState() => _PoseAnalysisScreenState();
 }
 
+enum PlancheStatus { notDetected, measuring, locked, warning }
+
 class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   CameraController? _cameraController;
   bool _isBusy = false;
   CustomPaint? _customPaint;
-  String? _text;
+  String? _message;
+  PlancheStatus _status = PlancheStatus.notDetected;
   int _cameraIndex = -1;
+
+  // Analysis Stats
+  double _leftElbowAngle = 0;
+  double _leanAmount = 0;
 
   @override
   void initState() {
@@ -42,48 +50,77 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('フォーム解析'),
+        title: const Text('AI フォーム解析'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          CameraPreview(_cameraController!),
+          Transform.scale(scale: 1.0, child: CameraPreview(_cameraController!)),
           if (_customPaint != null) _customPaint!,
+
+          // Analysis Overlay (Top)
           Positioned(
-            top: 40,
-            left: 0,
-            right: 0,
+            top: 20,
+            left: 24,
+            right: 24,
+            child: Column(
+              children: [
+                _buildStatusBadge(),
+                const SizedBox(height: 12),
+                _buildAnalysisCard(),
+              ],
+            ),
+          ),
+
+          // Message (Bottom Center)
+          Positioned(
+            bottom: 120,
+            left: 24,
+            right: 24,
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _text ?? '解析中...',
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+              child: AnimatedOpacity(
+                opacity: _message != null ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: _getStatusColor().withOpacity(0.5),
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    _message ?? '',
+                    style: TextStyle(
+                      color: _getStatusColor(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
+
+          // Close Button
           Positioned(
-            bottom: 30,
+            bottom: 40,
             left: 0,
             right: 0,
             child: Center(
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                backgroundColor: AppTheme.accentColor,
-                child: const Icon(Icons.close, color: Colors.white),
+              child: FloatingActionButton.large(
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.close, color: Colors.black, size: 32),
               ),
             ),
           ),
@@ -92,13 +129,121 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
     );
   }
 
+  Widget _buildStatusBadge() {
+    String label = '検出待ち';
+    IconData icon = Icons.person_search;
+    Color color = Colors.grey;
+
+    switch (_status) {
+      case PlancheStatus.notDetected:
+        label = '検出待ち';
+        break;
+      case PlancheStatus.measuring:
+        label = '解析中';
+        color = Colors.blueAccent;
+        icon = Icons.sync;
+        break;
+      case PlancheStatus.locked:
+        label = 'LOCKED';
+        color = AppTheme.primaryColor;
+        icon = Icons.lock;
+        break;
+      case PlancheStatus.warning:
+        label = 'WARNING';
+        color = Colors.orangeAccent;
+        icon = Icons.warning_amber_rounded;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStatItem(
+            '肘の角度',
+            '${_leftElbowAngle.toStringAsFixed(0)}°',
+            _leftElbowAngle > 165 ? AppTheme.primaryColor : Colors.orangeAccent,
+          ),
+          Container(width: 1, height: 30, color: Colors.white10),
+          _buildStatItem(
+            'リーン量',
+            '${_leanAmount.toStringAsFixed(0)}',
+            _leanAmount > 50 ? AppTheme.primaryColor : Colors.white60,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color valueColor) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor() {
+    switch (_status) {
+      case PlancheStatus.locked:
+        return AppTheme.primaryColor;
+      case PlancheStatus.warning:
+        return Colors.orangeAccent;
+      case PlancheStatus.measuring:
+        return Colors.blueAccent;
+      default:
+        return Colors.white;
+    }
+  }
+
   Future _startLiveFeed() async {
     final cameras = await availableCameras();
     _cameraIndex = cameras.indexWhere(
       (camera) => camera.lensDirection == CameraLensDirection.back,
     );
 
-    // Front camera fallback
     if (_cameraIndex == -1) _cameraIndex = 0;
 
     final camera = cameras[_cameraIndex];
@@ -179,48 +324,72 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   Future<void> _processImage(InputImage inputImage) async {
     if (_isBusy) return;
     _isBusy = true;
-    setState(() {
-      _text = '';
-    });
 
     final detector = ref.read(poseDetectorProvider);
     final poses = await detector.processImage(inputImage);
 
-    if (inputImage.metadata?.size != null &&
-        inputImage.metadata?.rotation != null) {
-      final painter = PosePainter(
-        poses,
-        inputImage.metadata!.size,
-        inputImage.metadata!.rotation,
-        _cameraController!.description.lensDirection,
-      );
-      _customPaint = CustomPaint(painter: painter);
-
-      // Basic Analysis (Planche Lean Check)
-      if (poses.isNotEmpty) {
-        final pose = poses.first;
-        final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
-        final leftWrist = pose.landmarks[PoseLandmarkType.leftWrist];
-
-        if (leftShoulder != null && leftWrist != null) {
-          // Check lean angle
-          final horizontalDiff = (leftShoulder.x - leftWrist.x).abs();
-          if (horizontalDiff > 50) {
-            _text = 'いいリーンです！';
-          } else {
-            _text = 'もっと前に体重を乗せましょう';
-          }
-        }
-      }
+    if (poses.isEmpty) {
+      _status = PlancheStatus.notDetected;
+      _message = '全身が映るように離れてください';
     } else {
-      _text = 'ポーズを検出中...';
-      _customPaint = null;
+      final pose = poses.first;
+      _analyzePlancheForm(pose);
+
+      if (inputImage.metadata?.size != null &&
+          inputImage.metadata?.rotation != null) {
+        final painter = PosePainter(
+          poses,
+          inputImage.metadata!.size,
+          inputImage.metadata!.rotation,
+          _cameraController!.description.lensDirection,
+          _getStatusColor(),
+        );
+        _customPaint = CustomPaint(painter: painter);
+      }
     }
 
     _isBusy = false;
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _analyzePlancheForm(Pose pose) {
+    final leftShoulder = pose.landmarks[PoseLandmarkType.leftShoulder];
+    final leftElbow = pose.landmarks[PoseLandmarkType.leftElbow];
+    final leftWrist = pose.landmarks[PoseLandmarkType.leftWrist];
+
+    if (leftShoulder != null && leftElbow != null && leftWrist != null) {
+      // 1. Calculate Elbow Angle (Straightness)
+      _leftElbowAngle = _calculateAngle(leftShoulder, leftElbow, leftWrist);
+
+      // 2. Calculate Lean (Horizontal offset between shoulder and wrist)
+      _leanAmount = (leftShoulder.x - leftWrist.x).abs();
+
+      // 3. Status Logic
+      if (_leftElbowAngle < 160) {
+        _status = PlancheStatus.warning;
+        _message = '腕を伸ばしましょう！';
+      } else if (_leanAmount < 40) {
+        _status = PlancheStatus.measuring;
+        _message = 'もっと前に倒れましょう';
+      } else {
+        _status = PlancheStatus.locked;
+        _message = 'いいフォームです！キープ！';
+      }
+    } else {
+      _status = PlancheStatus.measuring;
+      _message = '体が正しく認識されていません';
+    }
+  }
+
+  double _calculateAngle(PoseLandmark p1, PoseLandmark p2, PoseLandmark p3) {
+    double angle =
+        math.atan2(p3.y - p2.y, p3.x - p2.x) -
+        math.atan2(p1.y - p2.y, p1.x - p2.x);
+    angle = angle.abs() * 180.0 / math.pi;
+    if (angle > 180) angle = 360 - angle;
+    return angle;
   }
 }
 
@@ -230,19 +399,21 @@ class PosePainter extends CustomPainter {
     this.absoluteImageSize,
     this.rotation,
     this.cameraLensDirection,
+    this.accentColor,
   );
 
   final List<Pose> poses;
   final Size absoluteImageSize;
   final InputImageRotation rotation;
   final CameraLensDirection cameraLensDirection;
+  final Color accentColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0
-      ..color = AppTheme.primaryColor;
+      ..color = accentColor;
 
     for (final pose in poses) {
       pose.landmarks.forEach((_, landmark) {
