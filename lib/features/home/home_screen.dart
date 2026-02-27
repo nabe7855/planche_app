@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import '../training/screens/training_screen.dart';
+import 'widgets/progress_chart.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -114,29 +115,16 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Progress Chart Placeholder
+              // 進捗グラフ（実データ）
               Container(
                 width: double.infinity,
-                height: 200,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white10),
                 ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.bar_chart, size: 48, color: Colors.white24),
-                      SizedBox(height: 8),
-                      Text(
-                        'データが蓄積されるとグラフが表示されます',
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    ],
-                  ),
-                ),
+                child: const ProgressChart(),
               ),
             ],
           ),

@@ -9,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 
 import '../../../core/theme.dart';
+import '../models/training_session.dart';
 import '../providers/pose_detector_provider.dart';
+import '../providers/session_repository.dart';
 
 class PoseAnalysisScreen extends ConsumerStatefulWidget {
   const PoseAnalysisScreen({super.key});
@@ -34,9 +36,11 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
 
   // Auto-Timer
   Timer? _holdTimer;
-  int _holdMilliseconds = 0; // current hold duration in ms
-  int _bestHoldMilliseconds = 0; // best hold this session
-  bool _wasLocked = false; // track state change
+  int _holdMilliseconds = 0; // 現在のホールド時間（ms）
+  int _bestHoldMilliseconds = 0; // セッション中の最長ホールド（ms）
+  int _totalHoldMilliseconds = 0; // セッション中の累計ホールド（ms）
+  int _holdCount = 0; // 成功したホールドの回数
+  bool _wasLocked = false;
 
   @override
   void initState() {
@@ -47,8 +51,23 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   @override
   void dispose() {
     _holdTimer?.cancel();
+    _saveSession(); // 画面を閉じる時にセッションを保存
     _stopLiveFeed();
     super.dispose();
+  }
+
+  Future<void> _saveSession() async {
+    // ホールドが1回以上あればセッションとして保存
+    if (_holdCount == 0 && _bestHoldMilliseconds < 1000) return;
+    final session = TrainingSession(
+      date: DateTime.now(),
+      bestHoldMs: _bestHoldMilliseconds,
+      totalHoldMs: _totalHoldMilliseconds,
+      holdCount: _holdCount,
+      planName: 'タックプランシェ基礎',
+    );
+    final repo = ref.read(sessionRepositoryProvider);
+    await repo.saveSession(session);
   }
 
   @override
@@ -418,7 +437,7 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   void _updateHoldTimer() {
     final isLocked = _status == PlancheStatus.locked;
     if (isLocked && !_wasLocked) {
-      // Just locked — start timer
+      // LOCKEDになった → タイマー開始
       _holdTimer?.cancel();
       _holdTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
         if (mounted) {
@@ -431,8 +450,13 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
         }
       });
     } else if (!isLocked && _wasLocked) {
-      // Just unlocked — stop timer and reset current hold
+      // LOCKEDが解除された → タイマー停止、累計に加算
       _holdTimer?.cancel();
+      if (_holdMilliseconds >= 500) {
+        // 0.5秒以上なら有効なホールドとしてカウント
+        _totalHoldMilliseconds += _holdMilliseconds;
+        _holdCount++;
+      }
       _holdMilliseconds = 0;
     }
     _wasLocked = isLocked;

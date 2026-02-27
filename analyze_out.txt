@@ -1,0 +1,30 @@
+﻿Analyzing planche_app...                                        
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\home_screen.dart:58:52 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\features\home\widgets\progress_chart.dart:92:25 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\progress_chart.dart:139:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\progress_chart.dart:140:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\widgets\progress_chart.dart:201:29 - deprecated_member_use
+   info - Unnecessary 'this.' qualifier - lib\features\training\providers\workout_provider.dart:34:13 - unnecessary_this
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\features\training\screens\pose_analysis_screen.dart:90:11 - use_null_aware_elements
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\training\screens\pose_analysis_screen.dart:168:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\training\screens\pose_analysis_screen.dart:232:22 - deprecated_member_use
+   info - Unnecessary use of string interpolation - lib\features\training\screens\pose_analysis_screen.dart:271:13 - unnecessary_string_interpolations
+   info - Statements in an if should be enclosed in a block - lib\features\training\screens\pose_analysis_screen.dart:385:7 - curly_braces_in_flow_control_structures
+
+flutter : 11 issues found. (r
+an in 1.2s)
+発生場所 行:1 文字:1
++ flutter analyze --no-pub *>
+&1 | Out-File -FilePath analy
+ze_out.txt -E ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo           
+   : NotSpecified: (11 issu  
+  es found. (ran in 1.2s):   
+ String) [], RemoteExcept    
+ion
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

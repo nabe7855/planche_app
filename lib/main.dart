@@ -6,6 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/theme.dart';
 import 'features/onboarding/agreement_screen.dart';
 import 'features/onboarding/models/user_profile.dart';
+import 'features/training/models/training_session.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -17,6 +18,7 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
   Hive.registerAdapter(UserProfileAdapter());
+  Hive.registerAdapter(TrainingSessionAdapter());
 
   // Open boxes
   await Hive.openBox<UserProfile>('user_profile_box');
