@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme.dart';
 import '../providers/workout_provider.dart';
+import 'pose_analysis_screen.dart';
 
 class TrainingScreen extends ConsumerWidget {
   const TrainingScreen({super.key});
@@ -34,7 +35,7 @@ class TrainingScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                '目標キープ時間: 20秒', // TODO: Show target based on exercise type
+                '目標キープ時間: 20秒',
                 style: TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 48),
@@ -101,6 +102,21 @@ class TrainingScreen extends ConsumerWidget {
                           : AppTheme.primaryColor,
                     ),
                     child: Text(workoutState.isTimerRunning ? 'ストップ' : 'スタート'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PoseAnalysisScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('AI解析'),
                   ),
                   ElevatedButton(
                     onPressed: () {

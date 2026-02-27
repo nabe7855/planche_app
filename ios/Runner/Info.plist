@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>フォーム解析のためにカメラを使用します。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>音声コマンド等のためにマイクを使用する可能性があります（現在は使用しません）。</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>
