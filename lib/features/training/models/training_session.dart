@@ -37,4 +37,24 @@ class TrainingSession extends HiveObject {
 
   // 合計ホールドを秒数で表示するヘルパー
   double get bestHoldSeconds => bestHoldMs / 1000.0;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'date': date.toIso8601String(),
+      'bestHoldMs': bestHoldMs,
+      'totalHoldMs': totalHoldMs,
+      'holdCount': holdCount,
+      'planName': planName,
+    };
+  }
+
+  factory TrainingSession.fromMap(Map<String, dynamic> map) {
+    return TrainingSession(
+      date: DateTime.parse(map['date'] as String),
+      bestHoldMs: map['bestHoldMs'] as int,
+      totalHoldMs: map['totalHoldMs'] as int,
+      holdCount: map['holdCount'] as int,
+      planName: map['planName'] as String,
+    );
+  }
 }
