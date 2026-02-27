@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -31,6 +32,12 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   double _leftElbowAngle = 0;
   double _leanAmount = 0;
 
+  // Auto-Timer
+  Timer? _holdTimer;
+  int _holdMilliseconds = 0; // current hold duration in ms
+  int _bestHoldMilliseconds = 0; // best hold this session
+  bool _wasLocked = false; // track state change
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +46,7 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _stopLiveFeed();
     super.dispose();
   }
@@ -75,6 +83,50 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
               ],
             ),
           ),
+
+          // Hold Timer Ring (center of screen, visible only when locked)
+          if (_status == PlancheStatus.locked || _holdMilliseconds > 0)
+            Center(
+              child: AnimatedOpacity(
+                opacity: _status == PlancheStatus.locked ? 1.0 : 0.4,
+                duration: const Duration(milliseconds: 300),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 180,
+                      height: 180,
+                      child: CircularProgressIndicator(
+                        value: (_holdMilliseconds % 10000) / 10000,
+                        strokeWidth: 8,
+                        backgroundColor: Colors.white10,
+                        color: _getStatusColor(),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatMs(_holdMilliseconds),
+                          style: TextStyle(
+                            color: _getStatusColor(),
+                            fontSize: 44,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 8),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          'ホールド中',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Message (Bottom Center)
           Positioned(
@@ -199,6 +251,12 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
             'リーン量',
             '${_leanAmount.toStringAsFixed(0)}',
             _leanAmount > 50 ? AppTheme.primaryColor : Colors.white60,
+          ),
+          Container(width: 1, height: 30, color: Colors.white10),
+          _buildStatItem(
+            'ベスト (秒)',
+            _formatMs(_bestHoldMilliseconds),
+            Colors.amberAccent,
           ),
         ],
       ),
@@ -348,10 +406,42 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
       }
     }
 
+    // Auto-timer: start/stop based on lock status
+    _updateHoldTimer();
+
     _isBusy = false;
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _updateHoldTimer() {
+    final isLocked = _status == PlancheStatus.locked;
+    if (isLocked && !_wasLocked) {
+      // Just locked — start timer
+      _holdTimer?.cancel();
+      _holdTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (mounted) {
+          setState(() {
+            _holdMilliseconds += 100;
+            if (_holdMilliseconds > _bestHoldMilliseconds) {
+              _bestHoldMilliseconds = _holdMilliseconds;
+            }
+          });
+        }
+      });
+    } else if (!isLocked && _wasLocked) {
+      // Just unlocked — stop timer and reset current hold
+      _holdTimer?.cancel();
+      _holdMilliseconds = 0;
+    }
+    _wasLocked = isLocked;
+  }
+
+  String _formatMs(int ms) {
+    final seconds = ms ~/ 1000;
+    final tenths = (ms % 1000) ~/ 100;
+    return '$seconds.$tenths';
   }
 
   void _analyzePlancheForm(Pose pose) {
