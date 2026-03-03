@@ -182,17 +182,35 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
             ),
           ),
 
-          // Close Button
+          // Buttons (Bottom Center)
           Positioned(
             bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: FloatingActionButton.large(
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.close, color: Colors.black, size: 32),
-              ),
+            left: 24,
+            right: 24,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Flip Camera (Left)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FloatingActionButton(
+                    onPressed: _switchCamera,
+                    backgroundColor: Colors.white24,
+                    heroTag: 'flip_camera',
+                    child: const Icon(
+                      Icons.flip_camera_ios,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                // Close (Center)
+                FloatingActionButton.large(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: Colors.white,
+                  heroTag: 'close_analysis',
+                  child: const Icon(Icons.close, color: Colors.black, size: 32),
+                ),
+              ],
             ),
           ),
         ],
@@ -317,11 +335,19 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
 
   Future _startLiveFeed() async {
     final cameras = await availableCameras();
-    _cameraIndex = cameras.indexWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
-    );
 
-    if (_cameraIndex == -1) _cameraIndex = 0;
+    if (_cameraIndex == -1) {
+      // 初期化時はインカメラを優先（自分の姿を見ながら練習するため）
+      _cameraIndex = cameras.indexWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+      );
+      if (_cameraIndex == -1) {
+        _cameraIndex = cameras.indexWhere(
+          (camera) => camera.lensDirection == CameraLensDirection.back,
+        );
+      }
+      if (_cameraIndex == -1) _cameraIndex = 0;
+    }
 
     final camera = cameras[_cameraIndex];
     _cameraController = CameraController(
@@ -338,9 +364,20 @@ class _PoseAnalysisScreenState extends ConsumerState<PoseAnalysisScreen> {
   }
 
   Future _stopLiveFeed() async {
+    if (_cameraController == null) return;
     await _cameraController?.stopImageStream();
     await _cameraController?.dispose();
     _cameraController = null;
+  }
+
+  Future<void> _switchCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.length < 2) return;
+
+    _cameraIndex = (_cameraIndex + 1) % cameras.length;
+
+    await _stopLiveFeed();
+    await _startLiveFeed();
   }
 
   void _processCameraImage(CameraImage image) {
@@ -557,8 +594,15 @@ class PosePainter extends CustomPainter {
   ) {
     switch (rotation) {
       case InputImageRotation.rotation90deg:
+        if (cameraLensDirection == CameraLensDirection.front) {
+          // インカメラの場合は左右反転させる
+          return size.width - (x * size.width / absoluteImageSize.height);
+        }
         return x * size.width / absoluteImageSize.height;
       case InputImageRotation.rotation270deg:
+        if (cameraLensDirection == CameraLensDirection.front) {
+          return x * size.width / absoluteImageSize.height;
+        }
         return size.width - x * size.width / absoluteImageSize.height;
       default:
         return x * size.width / absoluteImageSize.width;
