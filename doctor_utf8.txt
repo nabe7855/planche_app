@@ -1,0 +1,39 @@
+﻿[竏咯 Flutter (Channel stable, 3.38.9, on Microsoft Windows [Version 10.0.26200.7840], locale ja-JP) [407ms]
+    窶｢ Flutter version 3.38.9 on channel stable at C:\src\flutter\flutter
+    窶｢ Upstream repository https://github.com/flutter/flutter.git
+    窶｢ Framework revision 67323de285 (5 weeks ago), 2026-01-28 13:43:12 -0800
+    窶｢ Engine revision 587c18f873
+    窶｢ Dart version 3.10.8
+    窶｢ DevTools version 2.51.1
+    窶｢ Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, omit-legacy-version-file, enable-lldb-debugging
+
+[竏咯 Windows Version (Windows 11 or higher, 25H2, 2009) [1,292ms]
+
+[!] Android toolchain - develop for Android devices (Android SDK version 36.1.0) [419ms]
+    窶｢ Android SDK at C:\Users\nabe7\AppData\Local\Android\sdk
+    窶｢ Emulator version 36.4.9.0 (build_id 14788078) (CL:N/A)
+    X cmdline-tools component is missing.
+      Try installing or updating Android Studio.
+      Alternatively, download the tools from https://developer.android.com/studio#command-line-tools-only and make sure to set the ANDROID_HOME environment variable.
+      See https://developer.android.com/studio/command-line for more details.
+    X Android license status unknown.
+      Run `flutter doctor --android-licenses` to accept the SDK licenses.
+      See https://flutter.dev/to/windows-android-setup for more details.
+
+[竏咯 Chrome - develop for the web [153ms]
+    窶｢ Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[竏咯 Visual Studio - develop Windows apps (Visual Studio Build Tools 2019 16.11.51) [152ms]
+    窶｢ Visual Studio at C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools
+    窶｢ Visual Studio Build Tools 2019 version 16.11.36422.26
+    窶｢ Windows 10 SDK version 10.0.19041.0
+
+[竏咯 Connected device (3 available) [238ms]
+    窶｢ Windows (desktop) 窶｢ windows 窶｢ windows-x64    窶｢ Microsoft Windows [Version 10.0.26200.7840]
+    窶｢ Chrome (web)      窶｢ chrome  窶｢ web-javascript 窶｢ Google Chrome 144.0.7559.133
+    窶｢ Edge (web)        窶｢ edge    窶｢ web-javascript 窶｢ Microsoft Edge 145.0.3800.58
+
+[竏咯 Network resources [282ms]
+    窶｢ All expected network resources are available.
+
+! Doctor found issues in 1 category.
